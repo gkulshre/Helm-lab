@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "redis.fullname" . }}
+  labels:
+    {{- include "redis.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "redis.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "redis.selectorLabels" . | nindent 8 }}
+    spec:
+      imagePullSecrets:
+           - name: {{ .Values.docker_registry }}
+      containers:
+        - name: {{ .Values.container_name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          ports:
+             -  containerPort: {{ .Values.containerPort }}
+          livenessProbe:
+               periodSeconds: 5
+               tcpSocket:
+                  port: {{ .Values.containerPort }}
+          readinessProbe:
+             periodSeconds: 5
+             tcpSocket:
+                  port: {{ .Values.containerPort }}
+          volumeMounts:
+                 - mountPath: /data
+                   name: redis-data
+    
+      volumes:
+       - name: redis-data
+         emptyDir: {}
