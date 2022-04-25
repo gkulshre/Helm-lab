@@ -11,7 +11,7 @@ image:
   repository: gkulshre/coit-home-commerce
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "adservice_v1"
+  tag: "adservice_v2"
 
 imagePullSecrets: []
 nameOverride: ""
