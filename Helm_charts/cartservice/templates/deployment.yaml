@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cartservice.fullname" . }}
+  labels:
+    {{- include "cartservice.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "cartservice.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "cartservice.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "cartservice.serviceAccountName" . }}
+      terminationGracePeriodSeconds: {{ .Values.tgp }}
+      imagePullSecrets:
+           - name: {{ .Values.docker_registry }}
+      containers:
+        - name: {{ .Values.container_name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          ports:
+             -  containerPort: {{ .Values.containerPort }}
+          env:
+            - name: REDIS_ADDR
+              value: "redis-cart:6379"
+
+          resources:
+              requests:
+                  cpu: {{ .Values.resource.requests.cpu }}
+                  memory: {{ .Values.resource.requests.memory }}
+              limits:
+                  cpu: {{ .Values.resource.limits.cpu }}
+                  memory: {{ .Values.resource.limits.memory }}
+          livenessProbe:
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            exec:
+               command: ["/bin/grpc_health_probe", "-addr=:7070"]
+          readinessProbe:
+             initialDelaySeconds: 15
+             periodSeconds: 10
+             exec:
+                command: ["/bin/grpc_health_probe", "-addr=:7070"]
